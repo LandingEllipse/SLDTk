@@ -28,3 +28,9 @@ plot(total)
 plt.savefig("out/intensity_graph_orange")
 plt.show()
 savetxt("out/jefferson-v2.dat", total)  # save the data to a file
+
+########################################################################################################################
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.ndimage.interpolation import rotate
