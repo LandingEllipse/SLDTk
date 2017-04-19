@@ -16,14 +16,11 @@ def analyze_disk(img, threshold=10):
         tuple: center coordinates (int) 
         int: radius
     """
+    if img is None:
+        raise TypeError("Supplied image is None - check that the path of the loaded image is correct.")
+
     if len(img.shape) > 2:
-        raise TypeError("Expected grayscale image")  # TODO: just do grayscale transformation internally?
-
-    # NOTE: we've moved away from resizing images (which was done when Canny was used for contour detection)
-    # TODO: clean up by removing the resize function and references to scale
-
-    # img, scale = resize_to_fit(img, resize_target)
-    scale = 1.0
+        raise TypeError("Expected grayscale image.")  # TODO: just do grayscale transformation internally?
 
     blur = cv2.GaussianBlur(img, (5, 5), 0)
     mask = cv2.inRange(blur, threshold, 255)
@@ -41,47 +38,7 @@ def analyze_disk(img, threshold=10):
 
 
     (x, y), r = cv2.minEnclosingCircle(contours[0])  # use the first/primary contour detected
-    return (round(x/scale), round(y/scale)), round(r/scale)
-
-
-# NOTE: this function is not currently needed.
-def resize_to_fit(img, size):
-    """Resizes and image in numpy.ndarray form to fit within the supplied bounds.
-    
-    Aspect ratio is preserved.
-    
-    Args:
-        img (numpy.ndarray): the image to be resized
-        size (int): desired size of the resulting longest edge
-        
-    Returns:
-        numpy.ndarray: the resized image, or the original if it was already sufficiently small
-        float: the scaling factor applied
-    """
-    in_h, in_w = img.shape
-    # print("in_h: {}".format(in_h))
-    # print("in_w: {}".format(in_w))
-
-    if in_h > size or in_w > size:
-        if in_h == in_w:
-            dsize = (size, size)
-            scale = size / in_h
-        elif in_h > in_w:
-            dsize = (round(size / (in_h / in_w)), size)
-            scale = size / in_h
-        else:  # in_w > in_h
-            dsize = (size, round(size / (in_w / in_h)))
-            scale = size / in_w
-
-        out = cv2.resize(img, dsize, interpolation=cv2.INTER_AREA)
-        # print("out_h: {}".format(out.shape[0]))
-        # print("out_w: {}".format(out.shape[1]))
-        # print("scale: {}".format(scale))
-        return out, scale
-
-    else:
-        scale = 1.0
-        return img, scale
+    return (round(x), round(y)), round(r)
 
 
 if __name__ == "__main__":
