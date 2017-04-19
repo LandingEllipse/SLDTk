@@ -1,5 +1,5 @@
 
-import disk_classifier
+import disk_analyzer
 import radial_slicer
 
 # TODO:
