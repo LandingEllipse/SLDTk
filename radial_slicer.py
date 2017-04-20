@@ -12,7 +12,7 @@ def radial_slice(img, center, radius, slices=20):
         matrix = cv2.getRotationMatrix2D(center=(center[0], center[1]), angle=(i * (360 / slices)), scale=1)
         rotated = cv2.warpAffine(img, matrix, (img.shape[1], img.shape[0]))
         # rotated = rotate(input=img, angle=(i * (360 / slices)), reshape=False)
-        stack[i, :] = rotated[center[0], center[1]:center[1] + radius]  # FIXME: verify x/y -> h/w
+        stack[i, :] = rotated[center[1], center[0]:center[0] + radius]
         # cv2.imwrite("out/radial_slicer/rotation/rotated{}.png".format(i), rotated)  # can be used to create animations
         # plt.plot(stack[i, :])
 
@@ -28,8 +28,10 @@ if __name__ == "__main__":
     path2 = "tests/images/20170315_130000_4096_HMIIC_-watermark_small_offset.jpg"
     path3 = "tests/images/20170315_aberystwyth_combined.jpg"
     path4 = "tests/images/20170315_aberystwyth_combined_square.jpg"
+    path5 = "tests/images/LimbDark.png"
+    path6 = "tests/images/LimbDark_marked.png"
 
-    image = cv2.imread(path1, cv2.IMREAD_GRAYSCALE)
+    image = cv2.imread(path6, cv2.IMREAD_GRAYSCALE)
 
     center, radius = disk_analyzer.analyze_disk(img=image.copy(), threshold=20)
 
@@ -40,7 +42,7 @@ if __name__ == "__main__":
 
     from timeit import default_timer as timer
     start = timer()
-    image_sliced = radial_slice(img=image, center=center, radius=radius, slices=20)
+    image_sliced = radial_slice(img=image, center=center, radius=radius, slices=100)
     end = timer()
     print(end - start)
 

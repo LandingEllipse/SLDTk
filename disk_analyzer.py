@@ -44,8 +44,9 @@ def analyze_disk(img, threshold=10):
 if __name__ == "__main__":
     path = "tests/images/20170315_130000_4096_HMIIC_-watermark.jpg"
     path2 = "tests/images/20170315_aberystwyth_combined.jpg"
+    path5 = "tests/images/LimbDark.png"
 
-    image = cv2.imread(path)
+    image = cv2.imread(path5)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     center, radius = analyze_disk(img=gray, threshold=20)
