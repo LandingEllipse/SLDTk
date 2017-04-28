@@ -11,13 +11,17 @@ def generate_model(intensity_profile):
     
     [1] Cox, Arthur N. (ed) (2000). Allen's Astrophysical Quantities (14th ed.)
     """
-    i_0 = intensity_profile.max()
+    # i_0 = intensity_profile.max()
+    i_0 = intensity_profile[0]
     r = len(intensity_profile)
     y_nomalized = intensity_profile / i_0  # TODO: probably an ok approximation but consider constraining fit to unity at x=0
     x_normalized = np.linspace(0., 1., num=r)
     x_cos_psi = np.sqrt(1 - x_normalized**2)
 
-    coefs = poly.polyfit(x_cos_psi, y_nomalized, deg=2)
+    weights = np.ones(len(intensity_profile))
+    weights[0] = 1e5
+
+    coefs = poly.polyfit(x_cos_psi, y_nomalized, w=weights, deg=2)
 
     return Model(coefs, i_0)
 

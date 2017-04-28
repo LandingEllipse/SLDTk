@@ -25,5 +25,10 @@ def clean_stack(stack):
 
 
 def compress_stack(stack):
-    return np.mean(stack, axis=0)
+    mean = np.mean(stack, axis=0)
+    slice_size = len(mean)
+    inner = round(slice_size * 0.1)
+
+    mean[0] = mean[1:inner].mean()
+    return mean
 

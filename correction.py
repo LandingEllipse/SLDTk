@@ -39,9 +39,9 @@ def correct_disk(img, disk_attr, profile=None, model=None):
                     else:
                         flat = profile[dist_rounded]
                 else:  # model
-                    flat = model.evaluate(dist)
+                    flat = model.evaluate(dist / dr)
 
-                img[y, x] = min(((img[y, x] / flat) * 127).round(), 255)  # TODO: take bias (127) as argument
+                img[y, x] = min(((img[y, x] / flat) * 127).round(), 255)  # TODO: take bias (here: 127) as argument
 
                 # Below: attempt at colour flattening (NOP!)
                 # tmp = (img[y,x,:]/ flat) * 127
