@@ -1,8 +1,8 @@
-# import numpy as np
+import numpy as np
 import cv2
 
 
-def analyze_disk(img, threshold=10):
+def detect_disk(img, threshold):
     """Finds the center and radius of a single solar disk present in the supplied image.
     
     Uses cv2.inRange, cv2.findContours and cv2.minEnclosingCircle to determine the centre and 
@@ -16,9 +16,6 @@ def analyze_disk(img, threshold=10):
         tuple: center coordinates in x,y form (int) 
         int: radius
     """
-    if img is None:
-        raise TypeError("img argument is None - check that the path of the loaded image is correct.")
-
     if len(img.shape) > 2:
         raise TypeError("Expected single channel (grayscale) image.")
 
@@ -41,26 +38,7 @@ def analyze_disk(img, threshold=10):
     # cv2.imwrite("out/disk_analyzer/circled_contours.png", img)
 
     if x is None:
-        raise RuntimeError("No disks detected in the image.")
+        raise RuntimeError("No disk detected in the image.")
 
-    return (round(x), round(y)), round(r)
+    return round(x), round(y), round(r)
 
-
-if __name__ == "__main__":
-    path = "tests/images/20170315_130000_4096_HMIIC_-watermark.jpg"
-    path2 = "tests/images/20170315_aberystwyth_combined.jpg"
-    path5 = "tests/images/LimbDark.png"
-    path7 = "tests/images/20170420_4096_HMIIC.jpg"
-    path8 = "tests/images/20170420_4096_HMIIC_-watermark.jpg"
-
-    image = cv2.imread(path7)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    center, radius = analyze_disk(img=gray, threshold=20)
-
-    print("min enclosing circle x,y: {},{}".format(center[0], center[1]))
-    print("min enclosing circle radius: {}".format(radius))
-
-    cv2.circle(image, center, radius, (0, 0, 255), 1)
-    cv2.rectangle(img=image, pt1=(center[0] - 2, center[1] - 2), pt2=(center[0] + 2, center[1] + 2), color=(0, 0, 255), thickness=-1)
-    cv2.imwrite("out/disk_analyzer/circle_superimposed.png", image)
