@@ -31,10 +31,11 @@ def generate_output_paths(input_path, debug):
     }
 
     if debug:
+        print("Debug mode active.")
         debug_dir = "./out/debug"
         os.makedirs(debug_dir, exist_ok=True)
-        paths['debug_stack'] = "{}/{}_stack{}".format(debug_dir, root, ext),
-        paths['debug_stack_clean'] = "{}/{}_stack_clean{}".format(debug_dir, root, ext),
+        paths['debug_stack'] = "{}/{}_stack{}".format(debug_dir, root, ext)
+        paths['debug_stack_clean'] = "{}/{}_stack_clean{}".format(debug_dir, root, ext)
         paths['debug_mec'] = "{}/{}_mec{}".format(debug_dir, root, ext)
 
     return paths
@@ -49,6 +50,7 @@ def positive_even_integer(arg):
         if val < 0 or val % 2 is not 0:  # TODO: might not need to enforce % when/if the implementation is changed to polar
             raise argparse.ArgumentTypeError("{} is not a positive, even integer.".format(val))
     return val
+
 
 def uint8(arg):
     try:
@@ -109,6 +111,7 @@ def main():
         plotter = plotting.Plotter(out_paths['plot'])
         plotter.plot_intensity_profile(intensity_profile)
         plotter.plot_model(model)
+        plotter.plot_expected_model(model, (0.3, 0.93, -0.23))  # TODO: tmp coefs for 5500Å
         plotter.show()
         # plotter.save()
 
@@ -135,10 +138,6 @@ def main():
         print("Slice stack saved to {}".format(out_paths['debug_stack']))
         cv2.imwrite(out_paths['debug_stack_clean'], stack_clean)
         print("Clean slice stack saved to {}".format(out_paths['debug_stack_clean']))
-
-        # Modelling
-        if args['operation'] in ['all', 'model']:
-            pass  # TODO
 
 
 if __name__ == "__main__":

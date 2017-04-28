@@ -31,9 +31,12 @@ class Model(object):
         self.coefs = coefs
         self.i_0 = i_0
 
-    def evaluate(self, x, relative=False):
+    def evaluate(self, x, relative=False, coefs=None):
+        if not coefs:
+            coefs = self.coefs
+
         cos_psi = self.dist_to_cos_psi(x)
-        i = poly.polyval(cos_psi, self.coefs)
+        i = poly.polyval(cos_psi, coefs)
         if not relative:
             i = i * self.i_0
         return i

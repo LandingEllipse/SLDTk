@@ -29,6 +29,14 @@ class Plotter(object):
         # TODO: add coefficients
         # TODO: add legend
 
+    # TODO: change implementation to something sensible
+    def plot_expected_model(self, model, coefs):
+        x = np.linspace(0., 1., num=200)
+        y = model.evaluate(x, relative=True, coefs=coefs)
+        self.ax.plot(x, y, linewidth=2, c='g')
+        # TODO: add coefficients
+        # TODO: add legend
+
     def show(self):
         plt.show()  # FIXME: self.fig.show() shows empty plot
 
