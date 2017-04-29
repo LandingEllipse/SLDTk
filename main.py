@@ -112,16 +112,18 @@ def main():
         plotter.plot_intensity_profile(intensity_profile)
         plotter.plot_model(model)
         plotter.plot_expected_model(model, (0.3, 0.93, -0.23))  # TODO: tmp coefs for 5500Å
-        plotter.show()
-        # plotter.save()
+        # plotter.show()
+        plotter.save()
+        print("Intensity profile plot saved to {}".format(out_paths['plot']))
 
     # Apply flat-field correction
     if args['operation'] in ('all', 'correct'):
         if args['cmode'] == 'profile':
             corrected = correction.correct_disk(gray, disk_attr, profile=intensity_profile)
         else:  # 'model'
-            corrected = correction.correct_disk(gray, disk_attr, model=model.evaluate)
+            corrected = correction.correct_disk(gray, disk_attr, model=model)
         cv2.imwrite(out_paths['corrected'], corrected)
+        print("Corrected image saved to {}".format(out_paths['corrected']))
 
     # Provide additional information and images if debug is enabled
     if args['debug']:
