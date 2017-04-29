@@ -1,7 +1,7 @@
 import math
 
 
-def correct_disk(img, disk_attr, profile=None, model=None):
+def correct_disk(img, disk_attr, bias, profile=None, model=None):
     """Corrects a solar disk for limb darkening using an intensity profile or intensity modelling function.
     Args:
         img (numpy.ndarray): source image to be corrected. The current implementation modifies the source image.
@@ -41,7 +41,7 @@ def correct_disk(img, disk_attr, profile=None, model=None):
                 else:  # model
                     flat = model.evaluate(dist / dr)
 
-                img[y, x] = min(((img[y, x] / flat) * 127).round(), 255)  # TODO: take bias (here: 127) as argument
+                img[y, x] = min(((img[y, x] / flat) * bias).round(), 255)
 
                 # Below: attempt at colour flattening (NOP!)
                 # tmp = (img[y,x,:]/ flat) * 127

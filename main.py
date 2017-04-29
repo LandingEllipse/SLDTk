@@ -13,12 +13,13 @@ config = {
     "threshold": 10,
     "slices": 100,
     "debug": False,
-    "cmode": ['profile', 'model']
+    "cmode": ['profile', 'model'],
+    "bias": 128,
 }
 
 
-def generate_output_paths(input_path, debug):
-    basename = os.path.basename(input_path)
+def generate_output_paths(args):
+    basename = os.path.basename(args['image'])
     root, ext = os.path.splitext(basename)
     out_dir = "./out"
     os.makedirs(out_dir, exist_ok=True)
@@ -26,11 +27,11 @@ def generate_output_paths(input_path, debug):
     paths = {
         'intensity': "{}/{}_intensity{}".format(out_dir, root, ext),
         'intensity_txt': "{}/{}_intensity.csv".format(out_dir, root),
-        'corrected': "{}/{}_corrected{}".format(out_dir, root, ext),
+        'corrected': "{}/{}_corrected_{}_{}{}".format(out_dir, root, args['bias'], args['cmode'], ext),
         'plot': "{}/{}_plot.png".format(out_dir, root)
     }
 
-    if debug:
+    if args['debug']:
         print("Debug mode active.")
         debug_dir = "./out/debug"
         os.makedirs(debug_dir, exist_ok=True)
@@ -41,7 +42,7 @@ def generate_output_paths(input_path, debug):
     return paths
 
 
-def positive_even_integer(arg):
+def pos_even_int(arg):
     try:
         val = int(arg)
     except ValueError:
@@ -68,8 +69,9 @@ def parse_input():
     ap.add_argument("-i", "--image", required=True, help="path to a jpg or png solar image file")
     ap.add_argument("-o", "--operation", choices=config["operations"], default=config["operations"][0], help="the operation that should be performed on the image")
     ap.add_argument("-c", "--cmode", choices=config["cmode"], default=config["cmode"][0], help="the correction mode to use")
-    ap.add_argument("-s", "--slices", type=positive_even_integer, default=config["slices"], help="number of slices to average to create the intensity profile")
-    ap.add_argument("-t", "--threshold", type=uint8, default=config["threshold"], help="brightness threshold for the solar disk")
+    ap.add_argument("-s", "--slices", type=pos_even_int, default=config["slices"], help="number of slices to average to create the intensity profile")
+    ap.add_argument("-t", "--threshold", type=uint8, default=config["threshold"], help="brightness threshold for the solar disk (uint8)")
+    ap.add_argument("-b", "--bias", type=uint8, default=config["bias"], help="brightness bias for the correction (uint8)")
     ap.add_argument("-d", "--debug", type=bool, default=config['debug'], help="if enabled, provides intermediary output to the 'debug' directory")
     args = vars(ap.parse_args())
 
@@ -85,7 +87,7 @@ def parse_input():
 
 def main():
     args, image = parse_input()
-    out_paths = generate_output_paths(args['image'], args['debug'])
+    out_paths = generate_output_paths(args)
 
     if len(image.shape) > 2:  # color image
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -119,9 +121,9 @@ def main():
     # Apply flat-field correction
     if args['operation'] in ('all', 'correct'):
         if args['cmode'] == 'profile':
-            corrected = correction.correct_disk(gray, disk_attr, profile=intensity_profile)
+            corrected = correction.correct_disk(gray, disk_attr, args['bias'], profile=intensity_profile)
         else:  # 'model'
-            corrected = correction.correct_disk(gray, disk_attr, model=model)
+            corrected = correction.correct_disk(gray, disk_attr, args['bias'], model=model)
         cv2.imwrite(out_paths['corrected'], corrected)
         print("Corrected image saved to {}".format(out_paths['corrected']))
 
