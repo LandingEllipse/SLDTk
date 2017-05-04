@@ -6,15 +6,14 @@ def detect_disk(img, threshold):
     """Finds the center and radius of a single solar disk present in the supplied image.
     
     Uses cv2.inRange, cv2.findContours and cv2.minEnclosingCircle to determine the centre and 
-    radius of the solar disk present in the supplied image.
+    radius of the solar disk present in the provided image.
     
     Args:
         img (numpy.ndarray): greyscale image containing a full, single solar disk against a background that is below `threshold`.
         threshold (int): threshold of min pixel value to include in the solar disk
     
     Returns:
-        tuple: center coordinates in x,y form (int) 
-        int: radius
+        disk attributes: ((x (int), y (int)), r (int)) - center coordinates as an x,y tuple, and the radius.
     """
     if len(img.shape) > 2:
         raise TypeError("Expected single channel (grayscale) image.")

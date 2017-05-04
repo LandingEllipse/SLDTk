@@ -2,6 +2,8 @@ import math
 import numpy.polynomial.polynomial as poly
 import numpy as np
 
+# TODO: refactor to allow pluggability and move generate_model to the class or equivalent.
+
 
 def generate_model(intensity_profile):
     """
@@ -14,7 +16,7 @@ def generate_model(intensity_profile):
     # i_0 = intensity_profile.max()
     i_0 = intensity_profile[0]
     r = len(intensity_profile)
-    y_nomalized = intensity_profile / i_0  # TODO: probably an ok approximation but consider constraining fit to unity at x=0
+    y_nomalized = intensity_profile / i_0
     x_normalized = np.linspace(0., 1., num=r)
     x_cos_psi = np.sqrt(1 - x_normalized**2)
 
@@ -35,14 +37,14 @@ class Model(object):
         if not coefs:
             coefs = self.coefs
 
-        cos_psi = self.dist_to_cos_psi(x)
+        cos_psi = self._dist_to_cos_psi(x)
         i = poly.polyval(cos_psi, coefs)
         if not relative:
             i = i * self.i_0
         return i
 
     @staticmethod
-    def dist_to_cos_psi(x):
+    def _dist_to_cos_psi(x):
         if type(x) is float:
             if x > 1 or x < 0:
                 raise ValueError("{} is out of bounds.".format(x))
