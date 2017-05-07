@@ -42,7 +42,28 @@ def create_slice_stack(img, disk_attr, num_slices):
     return stack
 
 
-def clean_stack(stack):
+def reject_outliers(stack, m=1.):
+    """ 
+    Uses http://www.itl.nist.gov/div898/handbook/eda/section3/eda35h.htm through 
+    http://stackoverflow.com/questions/11686720/is-there-a-numpy-builtin-to-reject-outliers-from-a-list
+    
+    Args:
+        stack: 
+        m:
+
+    Returns:
+
+    """
+    avg = stack.mean(axis=1)
+    d = np.abs(avg - np.median(avg))
+    mdev = np.median(d)
+    s = d/mdev if mdev else 0.
+    stack = stack[s < m]
+
+    #  Alternative percentile approach:
+    # avg = stack.mean(axis=1)
+    # percentiles = np.percentile(avg, (30, 70))
+    # mask = np.logical_and(avg >= percentiles[0], avg <= percentiles[1])
     return stack
 
 
@@ -68,5 +89,4 @@ def compress_stack(stack, inner_region=0.1):
 
     mean[0] = mean[1:inner].mean()
     return mean
-
 

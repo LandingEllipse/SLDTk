@@ -104,9 +104,9 @@ def main():
 
     # Create a slice stack
     stack = profile_generation.create_slice_stack(gray, disk_attr, args['slices'])
-    stack_clean = profile_generation.clean_stack(stack)  # TODO: add 'gradient' arg for sensitivity?
+    stack_clean = profile_generation.reject_outliers(stack)  # TODO: add 'gradient' arg for sensitivity?
     # Average the stack to create an intensity profile
-    intensity_profile = profile_generation.compress_stack(stack)
+    intensity_profile = profile_generation.compress_stack(stack_clean)
     if args['debug']:
         # Slicing
         print("Slices: {}".format(len(stack)))
