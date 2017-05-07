@@ -4,9 +4,9 @@ import cv2
 
 import disk_detection
 import profile_generation
-import modelling
 import correction
 import plotting
+from models import Polynomial
 
 config = {
     "operations": ['all', 'correct', 'model'],
@@ -118,7 +118,8 @@ def main():
 
     # Attempt to model the data as a polynomial
     if args['operation'] in ('all', 'model') or args['cmode'] == 'model':
-        model = modelling.generate_model(intensity_profile)
+        model = Polynomial()
+        model.fit(intensity_profile, {'degree': 2})
         print("Model fitted with coefficients: a0: {}, a1: {}, a2: {}".format(*model.coefs))
 
     # Plot intensity profile together with computed model
@@ -126,8 +127,12 @@ def main():
         img_name, _ = os.path.splitext(os.path.basename(args['image']))
         plotter = plotting.Plotter(img_name, out_paths['plot'])
         plotter.plot_intensity_profile(intensity_profile)
-        plotter.plot_expected_model(model, (0.3, 0.93, -0.23))  # TODO: tmp coefs for 5500Å
-        plotter.plot_model(model)
+        plotter.plot_model("Fitted", model, zorder=3)
+
+        reference = Polynomial()
+        reference.coefs = (0.3, 0.93, -0.23)  # TEMP: 550nm reference curve
+        plotter.plot_model("550nm", reference, zorder=2, color='g', linestyle=':')
+
         # plotter.show()
         plotter.save()
         print("Intensity profile plot saved to {}".format(out_paths['plot']))

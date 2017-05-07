@@ -3,7 +3,14 @@ import matplotlib.pyplot as plt
 
 
 class Plotter(object):
+    """
+    """
     def __init__(self, img_name, out_path):
+        """
+        Args:
+            img_name: 
+            out_path: 
+        """
         self.out_path = out_path
         self.fig, self.ax = plt.subplots()
 
@@ -18,23 +25,31 @@ class Plotter(object):
         self.extra_artists.append(self.fig.suptitle("{} - Intensity Profile".format(img_name), size=14))
 
     def plot_intensity_profile(self, profile):
+        """Normalizes an intensity profile and scatter-plots it.
+        
+        The values of the profile are normalized about the first (center) element and plotted as a fraction of this. The
+        user should therefore ensure that the first element of the profile is representative of the center intensity.
+        All datapoints in the profile are assumed to be linearly spaced from the sun center to its limb.
+        
+        Args:
+            profile (np.ndarray): 1-D intensity profile to plot. 
+        """
         y = profile / profile[0]
         x = np.linspace(0., 1., num=len(profile))
         self.ax.scatter(x, y, s=3, c='b', label=r"$\mathtt{Intensity\ \ profile}$", zorder=1)
-        # TODO: add legend
 
-    def plot_model(self, model):
-        x = np.linspace(0., 1., num=400)
-        y = model.evaluate(x, relative=True)
-        label = r"$\mathtt{{Fitted: \ \ \ \ \ \ a_0={:.2f}, a_1={:.2f}, a_2={:.2f}}}$".format(*model.coefs)
-        self.ax.plot(x, y, linewidth=2, c='r', label=label, zorder=3)
+    def plot_model(self, name, model, zorder=2, color='r', linestyle='-'):
+        """
+        Args:
+            name:
+            model: 
 
-    # TODO: change implementation to something sensible
-    def plot_expected_model(self, model, coefs):
+        """
         x = np.linspace(0., 1., num=400)
-        y = model.evaluate(x, relative=True, coefs=coefs)
-        label = r"$\mathtt{{Expected: a_0={:.2f}, a_1={:.2f}, a_2={:.2f}}}$".format(*coefs)
-        self.ax.plot(x, y, linewidth=2, c='g', label=label, linestyle=":", zorder=2)
+        y = model.eval(x)
+        coefs = ["a_{}={:.2f}".format(i, c) for i, c in enumerate(model.coefs)]
+        label = r"$\mathtt{{{}: \ {}}}$".format(name, ', '.join(coefs))
+        self.ax.plot(x, y, linewidth=2, c=color, label=label, zorder=zorder, linestyle=linestyle)
 
     def show(self):
         plt.show()  # FIXME: self.fig.show() shows empty plot

@@ -21,7 +21,7 @@ def create_slice_stack(img, disk_attr, num_slices):
     x, y, r = disk_attr
 
     if num_slices % 4 != 0:
-        raise TypeError("The number of slices must be divisible by four.")
+        raise ValueError("The number of slices must be divisible by four.")
 
     if len(img.shape) > 2:
         stack = np.zeros((num_slices, r, img.shape[2]), img.dtype)

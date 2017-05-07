@@ -21,7 +21,7 @@ def correct_disk(img, disk_attr, bias, profile=None, model=None):
 
     if profile is None and model is None \
             or profile is not None and model is not None:
-        raise TypeError("Must provide either an intensity profile OR a model function")
+        raise TypeError("Must provide either an intensity profile OR a model")
 
     dx, dy, dr = disk_attr
 
@@ -39,7 +39,7 @@ def correct_disk(img, disk_attr, bias, profile=None, model=None):
                     else:
                         flat = profile[dist_rounded]
                 else:  # model
-                    flat = model.evaluate(dist / dr)
+                    flat = model.eval(dist / dr, absolute=True)
 
                 img[y, x] = min(((img[y, x] / flat) * bias).round(), 255)
 
