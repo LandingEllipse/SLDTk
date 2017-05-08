@@ -65,7 +65,7 @@ def uint8(arg):
 
 
 def parse_input():
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(description='Model and correct for limb darkening in a solar image.')
     ap.add_argument("-i", "--image", required=True, help="path to a jpg or png solar image file")
     ap.add_argument("-o", "--operation", choices=config["operations"], default=config["operations"][0], help="the operation that should be performed on the image")
     ap.add_argument("-c", "--cmode", choices=config["cmode"], default=config["cmode"][0], help="the correction mode to use")

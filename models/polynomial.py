@@ -35,7 +35,7 @@ class Polynomial(LimbModel):
         cos_psi = self._dist_to_cos_psi(x)
         i = poly.polyval(cos_psi, self._coefs)
         if absolute:
-            i = i * self.i_0
+            i = i * self._i_0
         return i
 
     @property
