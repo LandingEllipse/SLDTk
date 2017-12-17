@@ -42,6 +42,13 @@ def create_slice_stack(img, disk_attr, num_slices):
     return stack
 
 
+def create_slice_stack_2(img, disk_attr, num_slices):
+    p = np.zeros((round(2*np.pi*disk_attr[2]), disk_attr[2]), dtype=np.uint8)
+    polar = cv2.linearPolar(img, (disk_attr[0], disk_attr[1]), disk_attr[2], cv2.INTER_CUBIC | cv2.WARP_FILL_OUTLIERS, p)
+    cv2.imwrite("out/debug/polar.jpg", p)
+    return create_slice_stack(img, disk_attr, num_slices)
+
+
 def reject_outliers(stack, m=1.):
     """ 
     Uses http://www.itl.nist.gov/div898/handbook/eda/section3/eda35h.htm through 
@@ -54,10 +61,10 @@ def reject_outliers(stack, m=1.):
     Returns:
 
     """
-    avg = stack.mean(axis=1)
-    d = np.abs(avg - np.median(avg))
-    mdev = np.median(d)
-    s = d/mdev if mdev else 0.
+    avg = stack.mean(axis=1)  # mean average of each slice
+    ad = np.abs(avg - np.median(avg))  # absolute deviation of each average slice from the median average slice
+    mad = np.median(ad)  # median absolute deviations
+    s = ad/mad if mad else 0.  # median absolute deviations scaled by the median absolute deviation
     stack = stack[s < m]
 
     #  Alternative percentile approach:
@@ -67,10 +74,12 @@ def reject_outliers(stack, m=1.):
     return stack
 
 
-def compress_stack(stack, inner_region=0.1):
+def compress_stack(stack, inner_region=0.2):
     """Creates a modified average profile (1-d array) from a slice stack.
     
-    After the slices of the stack are averaged the first value (sun center) is replaced with the awerage of the 
+    TODO: update to reflect use of median instead of mean
+    
+    After the slices of the stack are averaged the first value (sun center) is replaced with the average of the 
     surrounding `inner_region`. This is the same approach used by the Global H-alpha network, and is used to counteract
     the fact that the center pixel is unique (same in all slices, therefore not a product of stack averaging). If left
     untouched the center pixel could take any value between the local minima and maxima, which ultimately would likely 
@@ -83,10 +92,10 @@ def compress_stack(stack, inner_region=0.1):
     Returns:
         An average intensity profile (np.ndarray) from the sun's center to its limb.
     """
-    mean = np.mean(stack, axis=0)
-    slice_size = len(mean)
+    profile = np.median(stack, axis=0)
+    slice_size = len(profile)
     inner = round(slice_size * inner_region)
 
-    mean[0] = mean[1:inner].mean()
-    return mean
+    profile[0] = np.median(stack[:, 1:inner])
+    return profile
 

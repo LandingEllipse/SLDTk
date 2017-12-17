@@ -1,5 +1,6 @@
 import math
 
+# TODO: could memoization be used to give a speed boost here?
 
 def correct_disk(img, disk_attr, bias, profile=None, model=None):
     """Corrects a solar disk for limb darkening using an intensity profile or intensity modelling function.
@@ -43,7 +44,7 @@ def correct_disk(img, disk_attr, bias, profile=None, model=None):
 
                 img[y, x] = min(((img[y, x] / flat) * bias).round(), 255)
 
-                # Below: attempt at colour flattening (NOP!)
+                # Below: attempt at colour flattening (NOP!) - could maybe work if changed to multiple by a fraction of bias based on the colour (the ITU-R eq) ?
                 # tmp = (img[y,x,:]/ flat) * 127
                 # tmp[tmp > 255] = 255
                 # img[y, x, :] = tmp.astype(img.dtype)

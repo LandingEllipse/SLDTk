@@ -100,13 +100,18 @@ def main():
         print("Min enclosing circle x: {}, y: {}, r: {}".format(disk_attr[0], disk_attr[1], disk_attr[2]))
         cv2.circle(image, (disk_attr[0], disk_attr[1]), disk_attr[2], (0, 255, 0), 6)
         cv2.rectangle(img=image, pt1=(disk_attr[0] - 10, disk_attr[1] - 10), pt2=(disk_attr[0] + 10, disk_attr[1] + 10), color=(0, 255, 0), thickness=-1)
+        # cv2.putText(image, 'x: {}, y: {}, r: {}'.format(*disk_attr), (disk_attr[0] - 896, disk_attr[1] + 154), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 156, 0), 10)
+        # cv2.putText(image, 'x: {}, y: {}, r: {}'.format(*disk_attr), (disk_attr[0] - 900, disk_attr[1] + 150), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 0), 10)
         cv2.imwrite(out_paths['debug_mec'], image)
 
     # Create a slice stack
+    # stack = profile_generation.create_slice_stack(gray, disk_attr, args['slices'])
     stack = profile_generation.create_slice_stack(gray, disk_attr, args['slices'])
-    stack_clean = profile_generation.reject_outliers(stack)  # TODO: add 'gradient' arg for sensitivity?
+    # intensity_profile_2 = stack.mean(axis=0)  # FIXME: report temp
+    stack_clean = profile_generation.reject_outliers(stack)
     # Average the stack to create an intensity profile
     intensity_profile = profile_generation.compress_stack(stack_clean)
+
     if args['debug']:
         # Slicing
         print("Slices: {}".format(len(stack)))
@@ -124,9 +129,11 @@ def main():
 
     # Plot intensity profile together with computed model
     if args['operation'] in ('all', 'model'):
-        img_name, _ = os.path.splitext(os.path.basename(args['image']))
+        # img_name, _ = os.path.splitext(os.path.basename(args['image']))
+        img_name = os.path.basename(args['image'])
         plotter = plotting.Plotter(img_name, out_paths['plot'])
         plotter.plot_intensity_profile(intensity_profile)
+        # plotter.plot_intensity_profile_2(intensity_profile_2)  # FIXME: report temp
         plotter.plot_model("Fitted", model, zorder=3)
 
         reference = Polynomial()
@@ -145,7 +152,6 @@ def main():
             corrected = correction.correct_disk(gray, disk_attr, args['bias'], model=model)
         cv2.imwrite(out_paths['corrected'], corrected)
         print("Corrected image saved to {}".format(out_paths['corrected']))
-
 
 if __name__ == "__main__":
     main()

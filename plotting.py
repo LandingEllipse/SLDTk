@@ -23,6 +23,7 @@ class Plotter(object):
         self.fig.subplots_adjust(top=0.92)
         self.extra_artists = list()  # Added to extra artists during render to prevent cutoff
         self.extra_artists.append(self.fig.suptitle("{} - Intensity Profile".format(img_name), size=14))
+        self.ax.grid(which="major", axis="y", linestyle='--', linewidth=1, zorder=1)
 
     def plot_intensity_profile(self, profile):
         """Normalizes an intensity profile and scatter-plots it.
@@ -36,7 +37,12 @@ class Plotter(object):
         """
         y = profile / profile[0]
         x = np.linspace(0., 1., num=len(profile))
-        self.ax.scatter(x, y, s=3, c='b', label=r"$\mathtt{Intensity\ \ profile}$", zorder=1)
+        self.ax.scatter(x, y, s=3, c='b', label=r"$\mathtt{Intensity\ \ profile}$", zorder=10)
+
+    def plot_intensity_profile_2(self, profile):  # FIXME: report temp
+        y = profile / profile[0]
+        x = np.linspace(0., 1., num=len(profile))
+        self.ax.scatter(x, y, s=3, c='r', label=r"$\mathtt{Radial\ \ mean}$", zorder=9, marker='^')
 
     def plot_model(self, name, model, zorder=2, color='r', linestyle='-'):
         """
@@ -45,11 +51,11 @@ class Plotter(object):
             model: 
 
         """
-        x = np.linspace(0., 1., num=400)
+        x = np.linspace(0., 1., num=700)
         y = model.eval(x)
         coefs = ["a_{}={:.2f}".format(i, c) for i, c in enumerate(model.coefs)]
         label = r"$\mathtt{{{}: \ {}}}$".format(name, ', '.join(coefs))
-        self.ax.plot(x, y, linewidth=2, c=color, label=label, zorder=zorder, linestyle=linestyle)
+        self.ax.plot(x, y, linewidth=2, c=color, label=label, zorder=10+zorder, linestyle=linestyle)
 
     def show(self):
         plt.show()  # FIXME: self.fig.show() shows empty plot
