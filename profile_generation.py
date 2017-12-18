@@ -2,11 +2,18 @@ import numpy as np
 import cv2
 
 
+def _polar_to_cart(r, theta, center):
+
+    x = r * np.cos(theta) + center[0]
+    y = r * np.sin(theta) + center[1]
+    return x, y
+
+
 def create_slice_stack(img, disk_attr, num_slices):
     """Takes radial slices from a disk's center to its limb, returning a sequential stack of the slices.
     
     The slices are taken at (360/num_slices) degrees offset to each other, starting with the horizontal slice from
-    (x,y) to (x+r, y+r), and continuing clockwise (the disk is rotated counter-clockwise).
+    (x,y) to (x+r, y+r), and continuing clockwise.
     
     Args:
         img (np.ndarray): Solar image. 
@@ -20,26 +27,20 @@ def create_slice_stack(img, disk_attr, num_slices):
     """
     x, y, r = disk_attr
 
-    if num_slices % 4 != 0:
-        raise ValueError("The number of slices must be divisible by four.")
+    theta, radial = np.meshgrid(np.linspace(0, 2*np.pi, num_slices), np.arange(0, r))
 
-    if len(img.shape) > 2:
-        stack = np.zeros((num_slices, r, img.shape[2]), img.dtype)
+    x_cart, y_cart = _polar_to_cart(radial, theta, (x, y))
+    x_cart = x_cart.astype(int)  # TODO: would rounding be better and feasible?
+    y_cart = y_cart.astype(int)
+
+    if img.ndim == 3:
+        stack = img[y_cart, x_cart, :]
+        stack = np.reshape(stack, (r, num_slices, 3))
     else:
-        stack = np.zeros((num_slices, r), img.dtype)
+        stack = img[y_cart, x_cart]
+        stack = np.reshape(stack, (r, num_slices))
 
-    section_size = int(num_slices / 4)
-    for i in range(section_size):
-        matrix = cv2.getRotationMatrix2D(center=(x, y), angle=(i * (360 / num_slices)), scale=1)
-        rotated = cv2.warpAffine(img, matrix, (img.shape[1], img.shape[0]))
-
-        stack[i, :] = rotated[y, x:x+r]  #center to right
-        stack[i + section_size, :] = rotated[y:y+r, x]  #center to bottom
-        stack[i + section_size * 2, :] = rotated[y, x:x-r:-1]  #center to left
-        stack[i + section_size * 3, :] = rotated[y: y-r:-1, x] #center to top
-        # cv2.imwrite("out/rotation/rotated{}.png".format(i), rotated)  # KEEP: can be used to create animations
-        # plt.plot(stack[i, :])
-    return stack
+    return stack.swapaxes(0, 1)
 
 
 def create_slice_stack_2(img, disk_attr, num_slices):
