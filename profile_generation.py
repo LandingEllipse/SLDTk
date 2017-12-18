@@ -37,15 +37,16 @@ def create_slice_stack(img, disk_attr, num_slices):
         stack[i + section_size, :] = rotated[y:y+r, x]  #center to bottom
         stack[i + section_size * 2, :] = rotated[y, x:x-r:-1]  #center to left
         stack[i + section_size * 3, :] = rotated[y: y-r:-1, x] #center to top
-        # cv2.imwrite("out/rotation/rotated{}.png".format(i), rotated)  # can be used to create animations
+        # cv2.imwrite("out/rotation/rotated{}.png".format(i), rotated)  # KEEP: can be used to create animations
         # plt.plot(stack[i, :])
     return stack
 
 
 def create_slice_stack_2(img, disk_attr, num_slices):
+
     p = np.zeros((round(2*np.pi*disk_attr[2]), disk_attr[2]), dtype=np.uint8)
     polar = cv2.linearPolar(img, (disk_attr[0], disk_attr[1]), disk_attr[2], cv2.INTER_CUBIC | cv2.WARP_FILL_OUTLIERS, p)
-    cv2.imwrite("out/debug/polar.jpg", p)
+    cv2.imwrite("out/debug/polar.jpg", polar)
     return create_slice_stack(img, disk_attr, num_slices)
 
 
