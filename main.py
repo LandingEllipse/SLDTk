@@ -8,12 +8,12 @@ import correction
 import plotting
 from models import Polynomial
 
+
 config = {
     "operations": ['all', 'correct', 'model'],
     "threshold": 10,
     "slices": 100,
     "debug": False,
-    "cmode": ['profile', 'model'],
     "bias": 128,
 }
 
@@ -27,12 +27,12 @@ def generate_output_paths(args):
     paths = {
         'intensity': "{}/{}_intensity{}".format(out_dir, root, ext),
         'intensity_txt': "{}/{}_intensity.csv".format(out_dir, root),
-        'corrected': "{}/{}_corrected_{}_{}{}".format(out_dir, root, args['bias'], args['cmode'], ext),
+        'corrected': "{}/{}_corrected_{}{}".format(out_dir, root, args['bias'], ext),
         'plot': "{}/{}_plot.png".format(out_dir, root)
     }
 
     if args['debug']:
-        print("Debug mode active.")
+        print("Debug mode active.")  # TODO: move to appropriate location.
         debug_dir = "./out/debug"
         os.makedirs(debug_dir, exist_ok=True)
         paths['debug_stack'] = "{}/{}_stack{}".format(debug_dir, root, ext)
@@ -42,14 +42,14 @@ def generate_output_paths(args):
     return paths
 
 
-def pos_mul_4_int(arg):
+def pos_int_mul_4(arg):
     try:
         val = int(arg)
     except ValueError:
         raise argparse.ArgumentTypeError("{} could not be interpreted as an integer.".format(arg))
     else:
         if val < 0 or val % 4 != 0:
-            raise argparse.ArgumentTypeError("{} is not a positive, even integer.".format(val))
+            raise argparse.ArgumentTypeError("{} is not a positive integer divisible by four.".format(val))
     return val
 
 
@@ -65,11 +65,10 @@ def uint8(arg):
 
 
 def parse_input():
-    ap = argparse.ArgumentParser(description='Model and correct for limb darkening in a solar image.')
+    ap = argparse.ArgumentParser(description="Model and correct for limb darkening in a solar image.")
     ap.add_argument("-i", "--image", required=True, help="path to a jpg or png solar image file")
     ap.add_argument("-o", "--operation", choices=config["operations"], default=config["operations"][0], help="the operation that should be performed on the image")
-    ap.add_argument("-c", "--cmode", choices=config["cmode"], default=config["cmode"][0], help="the correction mode to use")
-    ap.add_argument("-s", "--slices", type=pos_mul_4_int, default=config["slices"], help="number of slices to average to create the intensity profile")
+    ap.add_argument("-s", "--slices", type=pos_int_mul_4, default=config["slices"], help="number of slices to average to create the intensity profile")
     ap.add_argument("-t", "--threshold", type=uint8, default=config["threshold"], help="brightness threshold for the solar disk (uint8)")
     ap.add_argument("-b", "--bias", type=uint8, default=config["bias"], help="brightness bias for the correction (uint8)")
     ap.add_argument("-d", "--debug", type=bool, default=config['debug'], help="if enabled, provides intermediary output to the 'debug' directory")
@@ -105,9 +104,7 @@ def main():
         cv2.imwrite(out_paths['debug_mec'], image)
 
     # Create a slice stack
-    # stack = profile_generation.create_slice_stack(gray, disk_attr, args['slices'])
     stack = profile_generation.create_slice_stack(gray, disk_attr, args['slices'])
-    # intensity_profile_2 = stack.mean(axis=0)  # FIXME: report temp
     stack_clean = profile_generation.reject_outliers(stack)
     # Average the stack to create an intensity profile
     intensity_profile = profile_generation.compress_stack(stack_clean)
@@ -121,11 +118,10 @@ def main():
         cv2.imwrite(out_paths['debug_stack_clean'], stack_clean)
         print("Clean slice stack saved to {}".format(out_paths['debug_stack_clean']))
 
-    # Attempt to model the data as a polynomial
-    if args['operation'] in ('all', 'model') or args['cmode'] == 'model':
-        model = Polynomial()
-        model.fit(intensity_profile, {'degree': 2})
-        print("Model fitted with coefficients: a0: {}, a1: {}, a2: {}".format(*model.coefs))
+    # Model the data as a polynomial
+    model = Polynomial()
+    model.fit(intensity_profile, {'degree': 2})
+    print("Model fitted with coefficients: a0: {}, a1: {}, a2: {}".format(*model.coefs))
 
     # Plot intensity profile together with computed model
     if args['operation'] in ('all', 'model'):
@@ -133,7 +129,6 @@ def main():
         img_name = os.path.basename(args['image'])
         plotter = plotting.Plotter(img_name, out_paths['plot'])
         plotter.plot_intensity_profile(intensity_profile)
-        # plotter.plot_intensity_profile_2(intensity_profile_2)  # FIXME: report temp
         plotter.plot_model("Fitted", model, zorder=3)
 
         reference = Polynomial()
@@ -146,23 +141,10 @@ def main():
 
     # Apply flat-field correction
     if args['operation'] in ('all', 'correct'):
-        if args['cmode'] == 'profile':
-            corrected = correction.correct_disk(gray, disk_attr, args['bias'], profile=intensity_profile)
-        else:  # 'model'
-            corrected = correction.correct_disk(gray, disk_attr, args['bias'], model=model)
+        corrected = correction.correct_disk(gray, disk_attr, args['bias'], model)
         cv2.imwrite(out_paths['corrected'], corrected)
         print("Corrected image saved to {}".format(out_paths['corrected']))
 
+
 if __name__ == "__main__":
     main()
-
-# path1 = "tests/images/20170315_130000_4096_HMIIC_-watermark_small.jpg"
-# path2 = "tests/images/20170315_130000_4096_HMIIC_-watermark_small_offset.jpg"
-# path3 = "tests/images/20170315_aberystwyth_combined.jpg"
-# path4 = "tests/images/20170315_aberystwyth_combined_square.jpg"
-# path5 = "tests/images/LimbDark.png"
-# path6 = "tests/images/LimbDark_marked_square.png"
-# path7 = "tests/images/20170420_4096_HMIIC.jpg"
-# path8 = "tests/images/20170420_4096_HMII.jpg"
-# path9 = "tests/images/20170315_125238_4096_HMII_small.jpg"
-# path10 = "tests/images/20140704_022325_4096_HMII.jpg"

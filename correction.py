@@ -1,51 +1,53 @@
-import math
+import numpy as np
 
-# TODO: could memoization be used to give a speed boost here?
 
-def correct_disk(img, disk_attr, bias, profile=None, model=None):
-    """Corrects a solar disk for limb darkening using an intensity profile or intensity modelling function.
-    Args:
-        img (numpy.ndarray): source image to be corrected. The current implementation modifies the source image.
-        disk_attr (tuple): disk attributes in the form of a `(x, y, radius)` tuple.
-        profile (numpy.ndarray): a single dimensional array representing the intensity profile of the disk
-                                 from center to limb. Must be at least as long as `r` in `disk_attr`.
-        model (Model): alternative to profile, a model able to evaluate a floating point distance, returning
-                        a uint8 intensity value.
-    Returns:
-        image (numpy.ndarray): image corrected for limb darkening in the solar disk
-    Throws:
-        TypeError: if input image is a colour image (only grayscale is currently supported)
-        TypeError: if either none or both of profile and model are provided (they are mutually exclusive)
+def correct_disk(img, disk_attr, bias, model):
+    """Perform a flat field correction on a solar disk.
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        An image containing a solar disk.
+    disk_attr : tuple of 3 ints
+        The x, y and r properties of the solar disk present in the image.
+    bias : int or float
+        Brightness level of the disk's centre.
+    model : LimbModel
+        Model used for radius-based flat field generation.
+
+    Returns
+    -------
+    numpy.ndarray
+        Flat field corrected version of the input image.
+
+    Raises
+    ------
+    TypeError
+        If the image is multichannel (i.e. color).
+
+    Notes
+    -----
+    The floating point range resulting from the flat field
+    correction is rescaled to 8-bit precision through centering around
+    `bias` and clipping overflowing values. This can result in the loss
+    of contrast of and within faclula, and is primarily done to increase
+    umbra/penumbra distinction.
+
     """
     if len(img.shape) > 2:
-        raise TypeError("`img` appears to be a color image. Currently only grayscale images can be flat-field corrected.")
+        raise TypeError("`img` appears to be a color image. Currently only "
+                        "grayscale images can be flat-field corrected.")
 
-    if profile is None and model is None \
-            or profile is not None and model is not None:
-        raise TypeError("Must provide either an intensity profile OR a model")
+    d_x, d_y, d_r = disk_attr
 
-    dx, dy, dr = disk_attr
+    xx, yy = np.ogrid[0:2*d_r, 0:2*d_r]
+    distances = np.sqrt(np.square(xx-d_r)+np.square(yy-d_r)) / d_r
 
-    # Loop over every pixel in a bounding square centered on the disk
-    for y in range(dy - dr, dy + dr):
-        for x in range(dx - dr, dx + dr):
+    norm = model.eval(distances, absolute=True)
 
-            dist = math.sqrt((dy - y)**2 + (dx - x)**2)  # Absolute distance from center
-            dist_rounded = round(dist)
+    disk = img[d_y-d_r:d_y+d_r, d_x-d_r:d_x+d_r].copy()
+    disk = (disk / norm) * bias
 
-            if dist_rounded < dr:  # Only correct pixels within the disk's radius
-                if profile is not None:
-                    if dist_rounded + 1 < len(profile):  # Interpolate if possible
-                        flat = (profile[dist_rounded] - profile[dist_rounded+1]) * (dist - int(dist)) + profile[dist_rounded]
-                    else:
-                        flat = profile[dist_rounded]
-                else:  # model
-                    flat = model.eval(dist / dr, absolute=True)
+    img[d_y-d_r:d_y+d_r, d_x-d_r:d_x+d_r] = np.clip(disk, 0, 255).round()
 
-                img[y, x] = min(((img[y, x] / flat) * bias).round(), 255)
-
-                # Below: attempt at colour flattening (NOP!) - could maybe work if changed to multiple by a fraction of bias based on the colour (the ITU-R eq) ?
-                # tmp = (img[y,x,:]/ flat) * 127
-                # tmp[tmp > 255] = 255
-                # img[y, x, :] = tmp.astype(img.dtype)
     return img
