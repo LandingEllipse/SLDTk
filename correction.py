@@ -12,7 +12,7 @@ def correct_disk(img, disk_attr, bias, model):
         The x, y and r properties of the solar disk present in the image.
     bias : int or float
         Brightness level of the disk's centre.
-    model : LimbModel
+    model : limb_model.LimbModel
         Model used for radius-based flat field generation.
 
     Returns
@@ -33,6 +33,11 @@ def correct_disk(img, disk_attr, bias, model):
     of contrast of and within faclula, and is primarily done to increase
     umbra/penumbra distinction.
 
+    TODO
+    ----
+    Use a circular mask instead of square bounding box, like:
+    `mask = x*x + y*y <= radius*radius`
+
     """
     if len(img.shape) > 2:
         raise TypeError("`img` appears to be a color image. Currently only "
@@ -43,10 +48,10 @@ def correct_disk(img, disk_attr, bias, model):
     xx, yy = np.ogrid[0:2*d_r, 0:2*d_r]
     distances = np.sqrt(np.square(xx-d_r)+np.square(yy-d_r)) / d_r
 
-    norm = model.eval(distances, absolute=True)
+    flat = model.eval(distances, absolute=True)
 
     disk = img[d_y-d_r:d_y+d_r, d_x-d_r:d_x+d_r].copy()
-    disk = (disk / norm) * bias
+    disk = (disk / flat) * bias
 
     img[d_y-d_r:d_y+d_r, d_x-d_r:d_x+d_r] = np.clip(disk, 0, 255).round()
 

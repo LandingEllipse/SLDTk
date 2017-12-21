@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 
 def polar2cart(r, theta, center):
-
     x = r * np.cos(theta) + center[0]
     y = r * np.sin(theta) + center[1]
     return x, y

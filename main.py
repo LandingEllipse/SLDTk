@@ -2,8 +2,8 @@ import os
 import argparse
 import cv2
 
-import disk_detection
-import profile_generation
+import detection
+import profile
 import correction
 import plotting
 from models import Polynomial
@@ -12,7 +12,7 @@ from models import Polynomial
 config = {
     "operations": ['all', 'correct', 'model'],
     "threshold": 10,
-    "slices": 100,
+    "slices": 1000,
     "debug": False,
     "bias": 128,
 }
@@ -27,7 +27,8 @@ def generate_output_paths(args):
     paths = {
         'intensity': "{}/{}_intensity{}".format(out_dir, root, ext),
         'intensity_txt': "{}/{}_intensity.csv".format(out_dir, root),
-        'corrected': "{}/{}_corrected_{}{}".format(out_dir, root, args['bias'], ext),
+        'corrected': "{}/{}_corrected_{}{}".format(out_dir, root, args['bias'],
+                                                   ext),
         'plot': "{}/{}_plot.png".format(out_dir, root)
     }
 
@@ -36,20 +37,22 @@ def generate_output_paths(args):
         debug_dir = "./out/debug"
         os.makedirs(debug_dir, exist_ok=True)
         paths['debug_stack'] = "{}/{}_stack{}".format(debug_dir, root, ext)
-        paths['debug_stack_clean'] = "{}/{}_stack_clean{}".format(debug_dir, root, ext)
+        paths['debug_stack_clean'] = "{}/{}_stack_clean{}".format(debug_dir,
+                                                                  root, ext)
         paths['debug_mec'] = "{}/{}_mec{}".format(debug_dir, root, ext)
 
     return paths
 
 
-def pos_int_mul_4(arg):
+def pos_int(arg):
     try:
         val = int(arg)
     except ValueError:
-        raise argparse.ArgumentTypeError("{} could not be interpreted as an integer.".format(arg))
+        raise argparse.ArgumentTypeError("{} could not be interpreted as an "
+                                         "integer.".format(arg))
     else:
-        if val < 0 or val % 4 != 0:
-            raise argparse.ArgumentTypeError("{} is not a positive integer divisible by four.".format(val))
+        if val <= 0:
+            raise argparse.ArgumentError(val, "must be a positive integer.")
     return val
 
 
@@ -57,29 +60,44 @@ def uint8(arg):
     try:
         val = int(arg)
     except ValueError:
-        raise argparse.ArgumentTypeError("{} could not be interpreted as an integer.".format(arg))
+        raise argparse.ArgumentTypeError("{} could not be interpreted as an "
+                                         "integer.".format(arg))
     else:
         if val < 0 or val > 255:
-            raise argparse.ArgumentTypeError("{} can not be represented as an unsigned 8-bit integer.".format(val))
+            raise argparse.ArgumentError(val,
+                                         "must be within the range (0, 255)")
     return val
 
 
 def parse_input():
-    ap = argparse.ArgumentParser(description="Model and correct for limb darkening in a solar image.")
-    ap.add_argument("-i", "--image", required=True, help="path to a jpg or png solar image file")
-    ap.add_argument("-o", "--operation", choices=config["operations"], default=config["operations"][0], help="the operation that should be performed on the image")
-    ap.add_argument("-s", "--slices", type=pos_int_mul_4, default=config["slices"], help="number of slices to average to create the intensity profile")
-    ap.add_argument("-t", "--threshold", type=uint8, default=config["threshold"], help="brightness threshold for the solar disk (uint8)")
-    ap.add_argument("-b", "--bias", type=uint8, default=config["bias"], help="brightness bias for the correction (uint8)")
-    ap.add_argument("-d", "--debug", type=bool, default=config['debug'], help="if enabled, provides intermediary output to the 'debug' directory")
+    ap = argparse.ArgumentParser(
+        description="Model and correct for limb darkening in a solar image.")
+    ap.add_argument("-i", "--image", required=True,
+                    help="path to a jpg or png solar image file")
+    ap.add_argument("-o", "--operation", choices=config["operations"],
+                    default=config["operations"][0],
+                    help="the operation that should be performed on the image")
+    ap.add_argument("-s", "--slices", type=pos_int, default=config["slices"],
+                    help="number of slices to average to create the "
+                         "intensity profile")
+    ap.add_argument("-t", "--threshold", type=uint8,
+                    default=config["threshold"],
+                    help="brightness threshold for the solar disk (uint8)")
+    ap.add_argument("-b", "--bias", type=uint8, default=config["bias"],
+                    help="brightness bias for the correction (uint8)")
+    ap.add_argument("-d", "--debug", type=bool, default=config['debug'],
+                    help="if enabled, provides intermediary output to the "
+                         "'debug' directory")
     args = vars(ap.parse_args())
 
     if not os.path.isfile(args['image']):
-        raise argparse.ArgumentTypeError("{} is not a path to a file.".format(args['image']))
+        raise argparse.ArgumentTypeError(
+            "{} is not a path to a file.".format(args['image']))
 
     image = cv2.imread(args['image'])
     if image is None:
-        raise TypeError("{} is not a valid jpg or png image.".format(args['image']))
+        raise TypeError(
+            "{} is not a valid jpg or png image.".format(args['image']))
 
     return args, image
 
@@ -94,54 +112,62 @@ def main():
         gray = image.copy()
 
     # Detect the solar disk
-    disk_attr = disk_detection.detect_disk(gray, args['threshold'])
+    disk_attr = detection.detect_disk(gray, args['threshold'])
     if args['debug']:
-        print("Min enclosing circle x: {}, y: {}, r: {}".format(disk_attr[0], disk_attr[1], disk_attr[2]))
-        cv2.circle(image, (disk_attr[0], disk_attr[1]), disk_attr[2], (0, 255, 0), 6)
-        cv2.rectangle(img=image, pt1=(disk_attr[0] - 10, disk_attr[1] - 10), pt2=(disk_attr[0] + 10, disk_attr[1] + 10), color=(0, 255, 0), thickness=-1)
-        # cv2.putText(image, 'x: {}, y: {}, r: {}'.format(*disk_attr), (disk_attr[0] - 896, disk_attr[1] + 154), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 156, 0), 10)
-        # cv2.putText(image, 'x: {}, y: {}, r: {}'.format(*disk_attr), (disk_attr[0] - 900, disk_attr[1] + 150), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 0), 10)
+        print("Min enclosing circle x: {}, y: {}, r: {}".format(disk_attr[0],
+                                                                disk_attr[1],
+                                                                disk_attr[2]))
+        cv2.circle(image, (disk_attr[0], disk_attr[1]), disk_attr[2],
+                   (0, 255, 0), 6)
+        cv2.rectangle(img=image, pt1=(disk_attr[0] - 10, disk_attr[1] - 10),
+                      pt2=(disk_attr[0] + 10, disk_attr[1] + 10),
+                      color=(0, 255, 0), thickness=-1)
+        # cv2.putText(image, 'x: {}, y: {}, r: {}'.format(*disk_attr),
+        #             (disk_attr[0] - 896, disk_attr[1] + 154),
+        #             cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 156, 0), 10)
+        # cv2.putText(image, 'x: {}, y: {}, r: {}'.format(*disk_attr),
+        #             (disk_attr[0] - 900, disk_attr[1] + 150),
+        #             cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 0), 10)
         cv2.imwrite(out_paths['debug_mec'], image)
 
-    # Create a slice stack
-    stack = profile_generation.create_slice_stack(gray, disk_attr, args['slices'])
-    stack_clean = profile_generation.reject_outliers(stack)
-    # Average the stack to create an intensity profile
-    intensity_profile = profile_generation.compress_stack(stack_clean)
-
+    # Create a slice stack.
+    stack = profile.extract_stack(gray, disk_attr, args['slices'])
+    stack_clean = profile.clean_stack(stack)
+    # Average the stack to create an intensity profile.
+    intensity_profile = profile.compress_stack(stack_clean)
     if args['debug']:
-        # Slicing
         print("Slices: {}".format(len(stack)))
         print("Slices dropped: {}".format(len(stack) - len(stack_clean)))
         cv2.imwrite(out_paths['debug_stack'], stack)
         print("Slice stack saved to {}".format(out_paths['debug_stack']))
         cv2.imwrite(out_paths['debug_stack_clean'], stack_clean)
-        print("Clean slice stack saved to {}".format(out_paths['debug_stack_clean']))
+        print("Clean slice stack saved to {}".format(out_paths[
+                                                    'debug_stack_clean']))
 
-    # Model the data as a polynomial
+    # Model the data as a polynomial.
     model = Polynomial()
     model.fit(intensity_profile, {'degree': 2})
-    print("Model fitted with coefficients: a0: {}, a1: {}, a2: {}".format(*model.coefs))
+    print("Model coefficients: a0: {}, a1: {}, a2: {}".format(*model.coefs))
 
-    # Plot intensity profile together with computed model
     if args['operation'] in ('all', 'model'):
-        # img_name, _ = os.path.splitext(os.path.basename(args['image']))
+        # Plot intensity profile together with computed model.
         img_name = os.path.basename(args['image'])
         plotter = plotting.Plotter(img_name, out_paths['plot'])
-        plotter.plot_intensity_profile(intensity_profile)
+        plotter.plot_profile(intensity_profile)
         plotter.plot_model("Fitted", model, zorder=3)
 
         reference = Polynomial()
         reference.coefs = (0.3, 0.93, -0.23)  # TEMP: 550nm reference curve
-        plotter.plot_model("550nm", reference, zorder=2, color='g', linestyle=':')
+        plotter.plot_model("550nm", reference, zorder=2, color='g',
+                           linestyle=':')
 
-        # plotter.show()
         plotter.save()
         print("Intensity profile plot saved to {}".format(out_paths['plot']))
 
-    # Apply flat-field correction
     if args['operation'] in ('all', 'correct'):
-        corrected = correction.correct_disk(gray, disk_attr, args['bias'], model)
+        # Apply flat-field correction.
+        corrected = correction.correct_disk(gray, disk_attr, args['bias'],
+                                            model)
         cv2.imwrite(out_paths['corrected'], corrected)
         print("Corrected image saved to {}".format(out_paths['corrected']))
 

@@ -2,6 +2,7 @@ import abc
 
 
 class LimbModel(metaclass=abc.ABCMeta):
+    """Baseclass serving as poor man's interface for all limb models."""
 
     @abc.abstractmethod
     def fit(self, intensity_profile, config=None):
