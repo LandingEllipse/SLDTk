@@ -1,6 +1,6 @@
 # project specific:
 .idea/
-out/*
+*/out/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
