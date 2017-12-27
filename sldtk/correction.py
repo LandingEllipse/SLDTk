@@ -33,11 +33,6 @@ def correct_disk(img, disk_attr, bias, model):
     of contrast of and within faclula, and is primarily done to increase
     umbra/penumbra distinction.
 
-    TODO
-    ----
-    Use a circular mask instead of square bounding box, like:
-    `mask = x*x + y*y <= radius*radius`
-
     """
     if len(img.shape) > 2:
         raise TypeError("`img` appears to be a color image. Currently only "
@@ -47,6 +42,7 @@ def correct_disk(img, disk_attr, bias, model):
 
     xx, yy = np.ogrid[0:2*d_r, 0:2*d_r]
     distances = np.sqrt(np.square(xx-d_r)+np.square(yy-d_r)) / d_r
+    distances = np.ma.masked_array(distances, mask=(distances >= 1))
 
     flat = model.eval(distances, absolute=True)
 

@@ -115,12 +115,12 @@ class Polynomial(LimbModel):
     @staticmethod
     def _dist_to_cos_psi(x):
         if isinstance(x, np.ndarray):
-            # if (x > 1).any() or (x < 0).any():
-            #     raise ValueError("relative distance is out of bounds.")
+            if (x > 1).any() or (x < 0).any():
+                raise ValueError("relative distance is out of bounds.")
             return np.sqrt(1 - x**2)
         elif isinstance(x, float):
-            # if x > 1 or x < 0:
-            #     raise ValueError("{} is out of bounds.".format(x))
+            if x > 1 or x < 0:
+                raise ValueError("{} is out of bounds.".format(x))
             return math.sqrt(1 - x**2)
         else:
             raise TypeError("Unable to evaluate {}.".format(type(x)))
