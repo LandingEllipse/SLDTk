@@ -31,9 +31,8 @@ class Polynomial(LimbModel):
         ----------
         intensity_profile : numpy.ndarray
             Single dimension intensity profile to fit the polynomial to.
-        params : dict, optional
-            The only supported parameter is "degree", which can be used to
-            specify the degree of the polynomial to fit.
+        params : int, optional
+            Degree of the fitted polynomial.
 
         Notes
         -----
@@ -41,10 +40,14 @@ class Polynomial(LimbModel):
         and it is therefore recommended to ensure that its value is
         representative of the center intensity.
 
+        TODO
+        ----
+        Reconsider assumptions associated with int casting of degree (params).
+
         """
 
-        if isinstance(params, dict) and 'degree' in params:
-            degree = params['degree']
+        if params is not None:
+            degree = int(params)
         else:
             degree = DEFAULT_ORDER
 
@@ -100,6 +103,14 @@ class Polynomial(LimbModel):
     @coefs.setter
     def coefs(self, coefs):
         self._coefs = coefs
+
+    def coefs_str(self):
+        """Generate the string representation of the model's coefficients."""
+        if self._coefs is not None:
+            coefs = ["a_{}={:.2f}".format(i, c) for i, c in enumerate(self._coefs)]
+            return ', '.join(coefs)
+        else:
+            return None
 
     @staticmethod
     def _dist_to_cos_psi(x):

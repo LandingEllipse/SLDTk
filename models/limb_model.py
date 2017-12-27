@@ -5,7 +5,7 @@ class LimbModel(metaclass=abc.ABCMeta):
     """Baseclass serving as poor man's interface for all limb models."""
 
     @abc.abstractmethod
-    def fit(self, intensity_profile, config=None):
+    def fit(self, intensity_profile, params=None):
         pass
 
     @abc.abstractmethod
@@ -20,4 +20,8 @@ class LimbModel(metaclass=abc.ABCMeta):
     @coefs.setter
     @abc.abstractmethod
     def coefs(self, coefs):
+        pass
+
+    @abc.abstractmethod
+    def coefs_str(self):
         pass

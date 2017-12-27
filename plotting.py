@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+# from matplotlib import rc
 
 
 class Plotter(object):
@@ -14,29 +15,37 @@ class Plotter(object):
 
     """
     def __init__(self, img_name, out_path):
-        self.out_path = out_path
-        self.fig, self.ax = plt.subplots()
+        # rc("text", usetex=True)
 
+        self.out_path = out_path
+        self.fig, self.ax = plt.subplots(figsize=(7, 7))
+        self.ax.set_aspect('equal')
         self.ax.set_xlim(0, 1.025)
-        self.ax.set_ylim(0, 1.025)
-        self.ax.xaxis.set(ticks=np.arange(0., 1.1, 0.2))
-        self.ax.yaxis.set(ticks=np.arange(0., 1.1, 0.2))
+        self.ax.set_ylim(0, 1.025)  # Can be overridden by `plot_profile`.
+        self.ax.xaxis.set(ticks=np.arange(0., 1.1, 0.1))
+        self.ax.yaxis.set(ticks=np.arange(0., 1.1, 0.1))
         self.ax.set_xlabel("Relative Distance From Centre")
         self.ax.set_ylabel("Relative Intensity")
-        self.fig.subplots_adjust(top=0.92)
+        self.fig.subplots_adjust(top=0.96)
         self.extra_artists = list()
         self.extra_artists.append(self.fig.suptitle(
             "{} - Intensity Profile".format(img_name), size=14))
-        self.ax.grid(which="major", axis="y", linestyle='--', linewidth=1,
+        self.ax.grid(which="major", axis="both", linestyle='--', linewidth=1,
                      zorder=1)
 
-    def plot_profile(self, profile):
+    def plot_profile(self, profile, label="Profile", color='b', zorder=1):
         """Normalize an intensity profile and scatter-plot it.
 
         Parameters
         ----------
         profile : numpy.ndarray
             1-D intensity profile to plot.
+        label optional
+            Custom plot label forwarded to matplotlib.pyplot.scatter.
+        color optional
+            Custom plot color forwarded to matplotlib.pyplot.scatter.
+        zorder optional
+            Custom plot zorder forwarded to matplotlib.pyplot.scatter.
 
         Notes
         -----
@@ -44,16 +53,23 @@ class Plotter(object):
         (center) element and plotted as a fraction of this. The
         user should therefore ensure that the first element of the
         profile is representative of the center intensity.
-        All datapoints in the profile are assumed to be linearly
+        All data points in the profile are assumed to be linearly
         spaced from the sun center to its limb.
 
         """
         y = profile / profile[0]
         x = np.linspace(0., 1., num=len(profile))
-        self.ax.scatter(x, y, s=3, c='b',
-                        label=r"$\mathtt{Intensity\ \ profile}$", zorder=10)
 
-    def plot_model(self, name, model, zorder=2, color='r', linestyle='-'):
+        # Extend axis limit if needed to show max value.
+        desired_axis_height = y.max() + y.max()*0.025
+        if desired_axis_height > self.ax.get_ylim()[1]:
+            self.ax.set_ylim((0, desired_axis_height))
+
+        self.ax.scatter(x, y, s=3, c=color,
+                        label=label,
+                        zorder=zorder)
+
+    def plot_model(self, name, model, zorder=1, color='r', linestyle='-'):
         """Add a plot of a model to the figure.
 
         Parameters
@@ -65,20 +81,22 @@ class Plotter(object):
         zorder : int, optional
             Z-order of this model plot.
         color optional
-            Line colour forwarded to matplotlib.pyplot.plot.
+            Custom line colour forwarded to matplotlib.pyplot.plot.
         linestyle optional
-            Line style forwarded to matplotlib.pyplot.plot.
+            Custom line style forwarded to matplotlib.pyplot.plot.
 
         """
         x = np.linspace(0., 1., num=700)
         y = model.eval(x)
-        coefs = ["a_{}={:.2f}".format(i, c) for i, c in enumerate(model.coefs)]
-        label = r"$\mathtt{{{}: \ {}}}$".format(name, ', '.join(coefs))
+        label = r"{}: ${{{}}}$".format(name, model.coefs_str())
         self.ax.plot(x, y, linewidth=2, c=color, label=label, zorder=10+zorder,
                      linestyle=linestyle)
 
-    # def show(self):
-    #     plt.show()  # FIXME: self.fig.show() shows empty plot
+    def show(self):
+        self.extra_artists.append(self.ax.legend(loc='lower left',
+                                                 bbox_to_anchor=(0, 0),
+                                                 fontsize=11))
+        plt.show()
 
     def save(self, out_path=None, dpi=160):
         """Save the graph with legends for the individual plots.
