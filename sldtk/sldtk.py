@@ -10,12 +10,17 @@ import os
 
 import cv2
 
-import util
-import correction
-import detection
-import models
-import plotting
-import profile
+from . import correction
+from . import detection
+from . import models
+from . import plotting
+from . import profile
+from .helpers import (
+    parse_input,
+    generate_output_paths,
+    overlay_mec,
+    plot_correction
+)
 
 config = {
     "debug": False,
@@ -34,8 +39,8 @@ config = {
 
 
 def main():
-    args = util.parse_input(config)
-    paths = util.generate_output_paths(args)
+    args = parse_input(config)
+    paths = generate_output_paths(args)
 
     image = cv2.imread(args['image'])
     if image is None:
@@ -52,7 +57,7 @@ def main():
     if args['debug']:
         print("MEC x: {}, y: {}, r: {}".format(disk_attr[0], disk_attr[1],
                                                disk_attr[2]))
-        image = util.overlay_mec(image, disk_attr)
+        image = overlay_mec(image, disk_attr)
         cv2.imwrite(paths["mec"], image, (cv2.IMWRITE_JPEG_QUALITY, 50,
                                           cv2.IMWRITE_PNG_COMPRESSION, 6))
 
@@ -103,7 +108,7 @@ def main():
                                linestyle=':')
 
         if args['plot_correction'] and corrected is not None:
-            util.plot_correction(corrected, disk_attr, args, plotter)
+            plot_correction(corrected, disk_attr, args, plotter)
 
         if args['interactive_plot']:
             plotter.show()

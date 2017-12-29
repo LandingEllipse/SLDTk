@@ -3,8 +3,8 @@ import os
 
 import cv2
 
-import models
-import profile
+from . import models
+from . import profile
 
 
 def plot_correction(img, disk_attr, args, plotter):
