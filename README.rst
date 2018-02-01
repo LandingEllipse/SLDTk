@@ -3,8 +3,8 @@ The Solar Limb Darkening Toolkit
 ================================
 
 SLDTk is a commandline program for fast and robust modelling and correction
-of limb darkening in solar images.
-
+of limb darkening in solar images. It is not yet ready for primetime, but I
+would love to hear your feedback and ideas for how to make SLDTk better.
 
 Getting Started
 ===============
@@ -26,7 +26,7 @@ SLDTk can be installed using pip:
 
 .. code-block:: console
 
-    $ sudo pip install sldtk
+    $ pip install sldtk
 
 Usage
 -----
@@ -45,8 +45,8 @@ threshold to output directory. A complete list can be seen by calling
 Features
 ========
 For now, the codebase provides the best source of information on SLDTk's
-features and implementation specific details, as auto-generation of
-documentation has not yet been set up.
+features and implementation specific details, as auto-generation of the
+documentation is still in the works.
 
 Input Formats
 -------------
@@ -56,7 +56,7 @@ Detection
 ---------
 The position and size of the solar disk is automatically determined using
 computer vision. The disk is subsequently unwrapped and cleaned of outliers
-(e.g. sunspots and facula) before an average intensity profile is generated.
+(e.g. sunspots and facula) before an average intensity profile is derived.
 
 Modelling
 ---------
@@ -82,7 +82,7 @@ open a new issue or contribute to an existing discussion.
 If you are interested in contributing to the codebase,
 `fork SLDTk on GitHub <https://github.com/Legendin/SLDTk#fork-destination-box>`_
 to get started. You can install the project in development mode by using
-``$ sudo pip install -e .`` from the cloned project root.
+``$ pip install -e .`` from the cloned project root.
 
 Have you found a solution to an existing issue or added a new feature?
 `Pull requests <https://github.com/Legendin/SLDTk/pulls>`_ are always welcome.
