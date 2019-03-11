@@ -49,6 +49,6 @@ def correct_disk(img, disk_attr, bias, model):
     disk = img[d_y-d_r:d_y+d_r, d_x-d_r:d_x+d_r].copy()
     disk = (disk / flat) * bias
 
-    img[d_y-d_r:d_y+d_r, d_x-d_r:d_x+d_r] = np.clip(disk, 0, 255).round()
+    img[d_y-d_r:d_y+d_r, d_x-d_r:d_x+d_r] = np.clip(disk, 0, 2**16 - 1).round()
 
     return img

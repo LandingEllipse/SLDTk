@@ -27,7 +27,7 @@ config = {
     "operations": ['all', 'correct', 'model'],
     "threshold": 10,
     "slices": 1000,
-    "bias": 175,
+    "bias": 44975,
     "models": list(models.models.keys()),
     "reference_models": list(models.reference_models.keys()),
     "plot_correction": True,
@@ -41,8 +41,7 @@ config = {
 def main():
     args = parse_input(config)
     paths = generate_output_paths(args)
-
-    image = cv2.imread(args['image'])
+    image = cv2.imread(args['image'], -1)
     if image is None:
         raise TypeError(
             "{} not recognized as a jpg or png image.".format(args['image']))
@@ -119,5 +118,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

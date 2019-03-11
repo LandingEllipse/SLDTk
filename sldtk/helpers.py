@@ -89,7 +89,7 @@ def parse_input(config):
                     help="Number of slices to average to create the intensity "
                          "profile.")
     ap.add_argument("-t", "--threshold",
-                    type=_uint8,
+                    type=int,
                     default=config["threshold"],
                     help="Brightness threshold for the solar disk (uint8).")
     ap.add_argument("-b", "--bias",

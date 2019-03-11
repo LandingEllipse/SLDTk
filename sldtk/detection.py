@@ -18,7 +18,7 @@ def detect_disk(img, threshold):
         background that is below `threshold`.
     threshold : int
         Minimum brightness threshold to be considered part of the solar disk.
-    
+
     Returns
     -------
     disk attributes tuple of ints
@@ -40,7 +40,7 @@ def detect_disk(img, threshold):
         raise TypeError("Expected single channel (grayscale) image.")
 
     blur = cv2.GaussianBlur(img, (5, 5), 0)
-    mask = cv2.inRange(blur, threshold, 255)
+    mask = cv2.inRange(blur, threshold, 2**16 - 1)
     img_mod, contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL,
                                                     cv2.CHAIN_APPROX_SIMPLE)
     # Determine and use the biggest contour found.
@@ -59,4 +59,3 @@ def detect_disk(img, threshold):
     if x is None:
         raise RuntimeError("No disk detected in the image.")
     return round(x), round(y), round(r)
-
